@@ -5,7 +5,7 @@ import jwt from "jsonwebtoken";
 const registerUser = async (req, res) => {
   try {
     const { fullname, email, phoneNumber, password, bio } = req.body;
-    if (!fullname || !email || password || !phoneNumber) {
+    if (!fullname || !email || !password || !phoneNumber) {
       return res.status(400).json({
         message: "Please fill in all fields",
         success: false,
@@ -49,14 +49,14 @@ const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    if (!email && !password) {
+    if (!email || !password) {
       return res.status(400).json({
         message: "Please fill in all fields",
         success: false,
       });
     }
 
-    const user = await User.find(email);
+    const user = await User.findOne({email});
 
     if (!user) {
       return res.status(404).json({
@@ -99,9 +99,70 @@ const loginUser = async (req, res) => {
         token: token,
       });
   } catch (error) {
+    console.log(error);
+    
     return res.status(400).json({
       success: false,
       message: "Error login user",
     });
   }
 };
+
+const logoutUser = async (req, res) => {
+  try {
+    return res.status(200).cookie("token", "", { maxAge: 0 }).json({
+      message: "Logout successfully",
+      success: true,
+    });
+  } catch (error) {
+    return res.status(400).json({
+      success: false,
+      message: "Error logout user",
+    });
+  }
+};
+
+const updateProfile = async (req, res) => {
+  try {
+    const { fullname, email, phoneNumber, bio } = req.body;
+
+    const userId = req.id; //middleware authentication
+
+    let user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    if (fullname) user.fullname = fullname;
+    if (email) user.email = email;
+    if (phoneNumber) user.phoneNumber = phoneNumber;
+    if (bio) user.profile.bio = bio;
+
+    await user.save();
+
+    user = {
+      _id: user._id,
+      fullname: user.fullname,
+      email: user.email,
+      phoneNumber: user.phoneNumber,
+      bio: user.profile.bio,
+    };
+
+    return res.status(200).json({
+      message: "Profile updated successfully",
+      success: true,
+      user,
+    });
+  } catch (error) {
+    return res.status(400).json({
+      success: false,
+      message: "Error update user",
+    });
+  }
+};
+
+export  { registerUser, loginUser, logoutUser, updateProfile };
