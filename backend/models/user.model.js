@@ -23,6 +23,12 @@ const userSchema = new mongoose.Schema(
       bio: { type: String },
       profilePhoto: { type: String, default: "" },
     },
+    blogs: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Blog",
+      },
+    ],
   },
   { timestamps: true }
 );
